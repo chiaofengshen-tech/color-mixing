@@ -1,0 +1,123 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#fffaf0">
+  <meta name="description" content="給國小五年級學生使用的互動式調色實驗，一起探索紅、黃、藍的混色變化。">
+  <title>調色小實驗｜Color Mixing Lab</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <a class="skip-link" href="#main">跳到主要內容</a>
+  <div class="paint-splash splash-one" aria-hidden="true"></div>
+  <div class="paint-splash splash-two" aria-hidden="true"></div>
+
+  <main id="main">
+    <section class="screen home-screen is-active" data-screen="home" aria-labelledby="home-title">
+      <div class="home-art" aria-hidden="true">
+        <span class="paint-dot red"></span><span class="plus">＋</span>
+        <span class="paint-dot yellow"></span><span class="arrow">→</span>
+        <span class="paint-dot orange"></span>
+      </div>
+      <p class="eyebrow">小小藝術家，準備好了嗎？</p>
+      <h1 id="home-title">調色小實驗<small>Color Mixing Lab</small></h1>
+      <p class="lead">用顏料混出新的顏色！</p>
+      <button class="primary-button start-button" type="button" data-start>
+        <span>開始吧！</span><small>Start</small><b aria-hidden="true">→</b>
+      </button>
+    </section>
+
+    <section class="screen" data-screen="choose" aria-labelledby="choose-title" hidden>
+      <div class="section-heading">
+        <p class="step-kicker">STEP 1</p>
+        <h2 id="choose-title">選擇兩個顏色<small>Choose two colors</small></h2>
+      </div>
+      <div class="color-choices" role="group" aria-label="選擇兩個原色">
+        <button class="color-choice color-red" type="button" data-color="red" aria-pressed="false">
+          <span class="choice-check" aria-hidden="true">✓</span>
+          <span class="paint-swatch"></span><strong>紅</strong><small>Red</small>
+        </button>
+        <button class="color-choice color-yellow" type="button" data-color="yellow" aria-pressed="false">
+          <span class="choice-check" aria-hidden="true">✓</span>
+          <span class="paint-swatch"></span><strong>黃</strong><small>Yellow</small>
+        </button>
+        <button class="color-choice color-blue" type="button" data-color="blue" aria-pressed="false">
+          <span class="choice-check" aria-hidden="true">✓</span>
+          <span class="paint-swatch"></span><strong>藍</strong><small>Blue</small>
+        </button>
+      </div>
+      <button class="primary-button next-button" type="button" data-to-mix disabled>
+        <span>下一步</span><small>Next</small><b aria-hidden="true">→</b>
+      </button>
+    </section>
+
+    <section class="screen" data-screen="mix" aria-labelledby="mix-title" hidden>
+      <div class="section-heading compact-heading">
+        <p class="step-kicker">STEP 2</p>
+        <h2 id="mix-title">開始調色<small>Start mixing</small></h2>
+      </div>
+      <div class="mixing-card">
+        <div class="paint-control" data-paint-control="0">
+          <div class="paint-label"><span><strong data-color-zh></strong><small data-color-en></small></span></div>
+          <div class="counter-row">
+            <button type="button" data-decrease aria-label="減少第一個顏色一滴">−</button>
+            <div class="paint-dots" data-paint-dots aria-live="polite"></div>
+            <button type="button" data-increase aria-label="增加第一個顏色一滴">＋</button>
+          </div>
+        </div>
+        <div class="mix-symbol" aria-hidden="true">＋</div>
+        <div class="paint-control" data-paint-control="1">
+          <div class="paint-label"><span><strong data-color-zh></strong><small data-color-en></small></span></div>
+          <div class="counter-row">
+            <button type="button" data-decrease aria-label="減少第二個顏色一滴">−</button>
+            <div class="paint-dots" data-paint-dots aria-live="polite"></div>
+            <button type="button" data-increase aria-label="增加第二個顏色一滴">＋</button>
+          </div>
+        </div>
+        <div class="mix-symbol arrow-symbol" aria-hidden="true">→</div>
+        <div class="result-block" aria-live="polite">
+          <span class="result-swatch" data-result-swatch></span>
+          <strong data-result-zh></strong><small data-result-en></small>
+        </div>
+      </div>
+      <div class="ratio-pill"><span data-ratio>1：1</span><small>顏料份數 Paint parts</small></div>
+      <div class="actions">
+        <button class="secondary-button" type="button" data-back-choose>← 上一步</button>
+        <button class="primary-button" type="button" data-to-wheel><span>看色相環</span><small>Color Wheel</small><b aria-hidden="true">→</b></button>
+      </div>
+    </section>
+
+    <section class="screen" data-screen="wheel" aria-labelledby="wheel-title" hidden>
+      <button class="secondary-button wheel-back-button" type="button" data-back-mix><span aria-hidden="true">←</span> 回到調色 <small>Back to Mix</small></button>
+      <div class="section-heading compact-heading">
+        <p class="step-kicker">STEP 3</p>
+        <h2 id="wheel-title">看看它在色相環的哪裡？<small>Find it on the color wheel</small></h2>
+      </div>
+      <div class="wheel-filters" role="group" aria-label="色彩類型篩選">
+        <button type="button" data-wheel-filter="all" aria-pressed="true"><strong>全部</strong><small>All</small></button>
+        <button type="button" data-wheel-filter="primary" aria-pressed="false"><strong>三原色</strong><small>Primary</small></button>
+        <button type="button" data-wheel-filter="secondary" aria-pressed="false"><strong>二次色</strong><small>Secondary</small></button>
+        <button type="button" data-wheel-filter="tertiary" aria-pressed="false"><strong>三次色</strong><small>Tertiary</small></button>
+      </div>
+      <div class="wheel-layout">
+        <div class="wheel-wrap">
+          <div class="color-wheel" data-color-wheel aria-label="十二色色相環"></div>
+          <div class="wheel-center" aria-hidden="true">色相環<small>Color<br>Wheel</small></div>
+        </div>
+        <aside class="answer-card">
+          <p>你剛剛調出的顏色是：</p>
+          <span class="answer-swatch" data-answer-swatch></span>
+          <h3><span data-answer-zh></span><small data-answer-en></small></h3>
+        </aside>
+      </div>
+      <div class="actions wheel-actions">
+        <button class="primary-button try-again" type="button" data-try-again><span>再試一次</span><small>Try Again</small><b aria-hidden="true">↻</b></button>
+      </div>
+    </section>
+  </main>
+
+  <footer>動動手，看看顏色會去哪裡！<small>Keep mixing and exploring!</small></footer>
+  <script src="script.js"></script>
+</body>
+</html>
