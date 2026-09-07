@@ -22,7 +22,6 @@
       </div>
       <p class="eyebrow">小小藝術家，準備好了嗎？</p>
       <h1 id="home-title">調色小實驗<small>Color Mixing Lab</small></h1>
-      <p class="lead">用顏料混出新的顏色！</p>
       <button class="primary-button start-button" type="button" data-start>
         <span>開始吧！</span><small>Start</small><b aria-hidden="true">→</b>
       </button>
@@ -62,7 +61,6 @@
       </div>
       <div class="mixing-card">
         <div class="paint-control" data-paint-control="0">
-          <div class="paint-label"><span><strong data-color-zh></strong><small data-color-en></small></span></div>
           <div class="counter-row">
             <button type="button" data-decrease aria-label="減少第一個顏色一滴">−</button>
             <div class="paint-dots" data-paint-dots aria-live="polite"></div>
@@ -71,7 +69,6 @@
         </div>
         <div class="mix-symbol" aria-hidden="true">＋</div>
         <div class="paint-control" data-paint-control="1">
-          <div class="paint-label"><span><strong data-color-zh></strong><small data-color-en></small></span></div>
           <div class="counter-row">
             <button type="button" data-decrease aria-label="減少第二個顏色一滴">−</button>
             <div class="paint-dots" data-paint-dots aria-live="polite"></div>
@@ -80,15 +77,16 @@
         </div>
         <div class="mix-symbol arrow-symbol" aria-hidden="true">→</div>
         <div class="result-block" aria-live="polite">
-          <span class="result-swatch" data-result-swatch></span>
-          <strong data-result-zh></strong><small data-result-en></small>
+          <div class="result-visual">
+            <span class="mix-inputs">
+              <span class="previous-swatch" data-previous-swatch hidden><i data-pair-first></i><b>＋</b><i data-pair-second></i></span>
+              <span class="added-paint" data-added-paint hidden aria-hidden="true"><b>＋</b><i></i></span>
+            </span>
+            <span class="inline-paint-flow" data-inline-flow hidden aria-hidden="true"><i></i></span>
+            <span class="result-swatch" data-result-swatch></span>
+            <span class="result-name"><strong data-result-zh></strong><small data-result-en></small></span>
+          </div>
         </div>
-      </div>
-      <div class="ratio-pill"><span data-ratio>1：1</span><small>顏料份數 Paint parts</small></div>
-      <div class="color-comparison" data-comparison hidden aria-live="polite">
-        <div><small>剛才</small><span data-before-swatch></span><strong data-before-name></strong></div>
-        <b aria-hidden="true">→</b>
-        <div><small>現在</small><span data-after-swatch></span><strong data-after-name></strong></div>
       </div>
       <div class="actions">
         <button class="secondary-button" type="button" data-back-choose>← 上一步</button>

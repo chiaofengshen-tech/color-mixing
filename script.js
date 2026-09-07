@@ -37,7 +37,8 @@ const REVERSE_RECIPES = {
   "red-purple": { colors: ["blue", "red"], parts: [1, 2] }
 };
 
-const state = { selected: [], parts: [1, 1], result: null, previousResult: null, target: null, wheelFilter: "all" };
+const state = { selected: [], parts: [0, 0], result: null, previousResult: null, addedColor: null, initialMix: false, mixStarted: false, target: null, wheelFilter: "all" };
+let resultRevealTimer;
 const screens = [...document.querySelectorAll("[data-screen]")];
 const choiceButtons = [...document.querySelectorAll("[data-color]")];
 
@@ -52,9 +53,12 @@ function showScreen(name) {
 
 function resetExperiment() {
   state.selected = [];
-  state.parts = [1, 1];
+  state.parts = [0, 0];
   state.result = null;
   state.previousResult = null;
+  state.addedColor = null;
+  state.initialMix = false;
+  state.mixStarted = false;
   state.target = null;
   choiceButtons.forEach((button) => button.setAttribute("aria-pressed", "false"));
   updateSelection();
@@ -90,39 +94,99 @@ function getResult(first, second, firstParts, secondParts) {
 function renderMix() {
   document.querySelectorAll("[data-paint-control]").forEach((control, index) => {
     const color = COLORS[state.selected[index]];
-    control.querySelector("[data-color-zh]").textContent = color.zh;
-    control.querySelector("[data-color-en]").textContent = color.en;
     const dots = control.querySelector("[data-paint-dots]");
-    dots.innerHTML = Array.from({ length: state.parts[index] }, () => `<span class="dot" style="background:${color.hex}"></span>`).join("");
-    dots.setAttribute("aria-label", `${color.zh}色 ${state.parts[index]} 份`);
-    control.querySelector("[data-decrease]").disabled = state.parts[index] === 1;
-    control.querySelector("[data-increase]").disabled = state.parts[index] === 2 || state.parts[1 - index] === 2;
+    dots.innerHTML = state.parts[index] === 0
+      ? `<span class="dot is-source" style="background:${color.hex}" aria-hidden="true"></span>`
+      : Array.from({ length: state.parts[index] }, () => `<span class="dot" style="background:${color.hex}"></span>`).join("");
+    dots.setAttribute("aria-label", `${color.zh}色目前 ${state.parts[index]} 滴`);
+    control.querySelector("[data-decrease]").disabled = state.parts[index] === 0;
+    const ownParts = state.parts[index];
+    const otherParts = state.parts[1 - index];
+    control.querySelector("[data-increase]").disabled = ownParts === 2 || (ownParts > 0 && (otherParts === 0 || otherParts === 2));
   });
 
-  state.result = getResult(state.selected[0], state.selected[1], state.parts[0], state.parts[1]);
-  const swatch = document.querySelector("[data-result-swatch]");
-  swatch.style.background = state.result.hex;
-  swatch.classList.remove("is-changing");
-  requestAnimationFrame(() => swatch.classList.add("is-changing"));
-  setTimeout(() => swatch.classList.remove("is-changing"), 260);
-  document.querySelector("[data-result-zh]").textContent = state.result.zh;
-  document.querySelector("[data-result-en]").textContent = state.result.en;
-  document.querySelector("[data-ratio]").textContent = `${state.parts[0]}：${state.parts[1]}`;
-
-  const comparison = document.querySelector("[data-comparison]");
-  comparison.hidden = !state.previousResult;
-  if (state.previousResult) {
-    document.querySelector("[data-before-swatch]").style.background = state.previousResult.hex;
-    document.querySelector("[data-before-name]").textContent = state.previousResult.zh;
-    document.querySelector("[data-after-swatch]").style.background = state.result.hex;
-    document.querySelector("[data-after-name]").textContent = state.result.zh;
+  const hasBothColors = state.parts[0] > 0 && state.parts[1] > 0;
+  const hasAnyColor = state.parts[0] > 0 || state.parts[1] > 0;
+  if (hasBothColors) {
+    state.result = getResult(state.selected[0], state.selected[1], state.parts[0], state.parts[1]);
+  } else if (hasAnyColor) {
+    const singleColorKey = state.selected[state.parts[0] > 0 ? 0 : 1];
+    state.result = WHEEL_COLORS.find((color) => color.key === singleColorKey);
+  } else {
+    state.result = null;
   }
+  const swatch = document.querySelector("[data-result-swatch]");
+  const resultZh = document.querySelector("[data-result-zh]");
+  const resultEn = document.querySelector("[data-result-en]");
+  const resultBlock = document.querySelector(".result-block");
+  const singleColorStage = state.mixStarted && hasAnyColor && !hasBothColors;
+  resultBlock.classList.toggle("is-unstarted", !state.mixStarted);
+  resultBlock.classList.toggle("is-one-color", singleColorStage);
+  resultBlock.classList.toggle("is-empty", !hasAnyColor);
+  if (state.result) {
+    swatch.style.background = state.result.hex;
+    swatch.classList.remove("is-changing");
+    requestAnimationFrame(() => swatch.classList.add("is-changing"));
+    setTimeout(() => swatch.classList.remove("is-changing"), 260);
+    resultZh.textContent = state.result.zh;
+    resultEn.textContent = state.result.en;
+  } else {
+    resultZh.textContent = "";
+    resultEn.textContent = "";
+  }
+  document.querySelector("[data-to-wheel]").hidden = !hasBothColors;
+
+  const previousSwatch = document.querySelector("[data-previous-swatch]");
+  const addedPaint = document.querySelector("[data-added-paint]");
+  const mixInputs = document.querySelector(".mix-inputs");
+  const inlineFlow = document.querySelector("[data-inline-flow]");
+  // 減少顏料回到 1：1 時直接顯示二次色；只有首次混色或加色時播放動畫。
+  const shouldAnimate = hasBothColors && Boolean(state.initialMix || state.addedColor);
+  const staticStage = hasBothColors && !shouldAnimate;
+  clearTimeout(resultRevealTimer);
+  previousSwatch.hidden = !(shouldAnimate || singleColorStage || staticStage);
+  addedPaint.hidden = !(shouldAnimate && state.addedColor);
+  mixInputs.hidden = previousSwatch.hidden && addedPaint.hidden;
+  inlineFlow.hidden = !shouldAnimate;
+  resultBlock.classList.toggle("is-static", staticStage);
+  resultBlock.classList.toggle("is-waiting", shouldAnimate);
+  if (staticStage) {
+    previousSwatch.classList.remove("is-primary-pair");
+    previousSwatch.style.background = state.result.hex;
+  } else if (singleColorStage) {
+    const singleIndex = state.parts[0] > 0 ? 0 : 1;
+    previousSwatch.classList.remove("is-primary-pair");
+    previousSwatch.style.background = COLORS[state.selected[singleIndex]].hex;
+  } else if (shouldAnimate) {
+    const firstHex = COLORS[state.selected[0]].hex;
+    const secondHex = COLORS[state.selected[1]].hex;
+    const isEqualMix = state.parts[0] === state.parts[1];
+    const showPrimaryPair = state.initialMix || isEqualMix;
+    const beforeHex = showPrimaryPair ? firstHex : state.previousResult.hex;
+    previousSwatch.classList.toggle("is-primary-pair", showPrimaryPair);
+    previousSwatch.style.background = showPrimaryPair ? "transparent" : beforeHex;
+    if (showPrimaryPair) {
+      previousSwatch.querySelector("[data-pair-first]").style.background = firstHex;
+      previousSwatch.querySelector("[data-pair-second]").style.background = secondHex;
+    }
+    if (state.addedColor) addedPaint.querySelector("i").style.background = COLORS[state.addedColor].hex;
+    inlineFlow.style.setProperty("--before-color", beforeHex);
+    inlineFlow.style.setProperty("--after-color", state.result.hex);
+    inlineFlow.classList.remove("is-animating");
+    void inlineFlow.offsetWidth;
+    inlineFlow.classList.add("is-animating");
+    resultRevealTimer = setTimeout(() => {
+      resultBlock.classList.remove("is-waiting");
+    }, 3000);
+  }
+  state.initialMix = false;
+  state.addedColor = null;
 
   const targetCard = document.querySelector("[data-target-card]");
   targetCard.hidden = !state.target;
   if (state.target) {
     const targetColor = WHEEL_COLORS.find((color) => color.key === state.target);
-    const complete = state.result.key === state.target;
+    const complete = Boolean(state.result && state.result.key === state.target);
     document.querySelector("[data-target-swatch]").style.background = targetColor.hex;
     document.querySelector("[data-target-name]").textContent = targetColor.zh;
     document.querySelector("[data-target-status]").textContent = complete ? "調出來了！" : "試著調出它";
@@ -131,11 +195,16 @@ function renderMix() {
 }
 
 function changeParts(index, amount) {
-  if (amount > 0 && state.parts[1 - index] === 2) return;
-  const next = Math.max(1, Math.min(2, state.parts[index] + amount));
+  if (amount > 0 && state.parts[index] > 0 && (state.parts[1 - index] === 0 || state.parts[1 - index] === 2)) return;
+  const hadBothColors = state.parts[0] > 0 && state.parts[1] > 0;
+  const current = state.parts[index];
+  const next = Math.max(0, Math.min(2, current + amount));
   if (next === state.parts[index]) return;
   state.previousResult = state.result;
   state.parts[index] = next;
+  if (amount > 0) state.mixStarted = true;
+  state.initialMix = !hadBothColors && state.parts[0] > 0 && state.parts[1] > 0;
+  state.addedColor = amount > 0 && hadBothColors ? state.selected[index] : null;
   renderMix();
 }
 
@@ -159,8 +228,11 @@ function renderWheel() {
 
 document.querySelector("[data-start]").addEventListener("click", resetExperiment);
 document.querySelector("[data-to-mix]").addEventListener("click", () => {
-  state.parts = [1, 1];
+  state.parts = [0, 0];
   state.previousResult = null;
+  state.addedColor = null;
+  state.initialMix = false;
+  state.mixStarted = false;
   state.target = null;
   renderMix();
   showScreen("mix");
@@ -185,8 +257,11 @@ document.querySelector("[data-color-wheel]").addEventListener("click", (event) =
   const recipe = REVERSE_RECIPES[colorButton.dataset.wheelColor];
   if (!recipe) return;
   state.selected = [...recipe.colors];
-  state.parts = [1, 1];
+  state.parts = [0, 0];
   state.previousResult = null;
+  state.addedColor = null;
+  state.initialMix = false;
+  state.mixStarted = false;
   state.target = colorButton.dataset.wheelColor;
   choiceButtons.forEach((button) => button.setAttribute("aria-pressed", state.selected.includes(button.dataset.color) ? "true" : "false"));
   updateSelection();
