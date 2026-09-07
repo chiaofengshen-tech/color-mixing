@@ -57,6 +57,9 @@
         <p class="step-kicker">STEP 2</p>
         <h2 id="mix-title">開始調色<small>Start mixing</small></h2>
       </div>
+      <div class="target-card" data-target-card hidden>
+        <span>目標顏色</span><b class="target-swatch" data-target-swatch></b><strong data-target-name></strong><em data-target-status></em>
+      </div>
       <div class="mixing-card">
         <div class="paint-control" data-paint-control="0">
           <div class="paint-label"><span><strong data-color-zh></strong><small data-color-en></small></span></div>
@@ -82,6 +85,11 @@
         </div>
       </div>
       <div class="ratio-pill"><span data-ratio>1：1</span><small>顏料份數 Paint parts</small></div>
+      <div class="color-comparison" data-comparison hidden aria-live="polite">
+        <div><small>剛才</small><span data-before-swatch></span><strong data-before-name></strong></div>
+        <b aria-hidden="true">→</b>
+        <div><small>現在</small><span data-after-swatch></span><strong data-after-name></strong></div>
+      </div>
       <div class="actions">
         <button class="secondary-button" type="button" data-back-choose>← 上一步</button>
         <button class="primary-button" type="button" data-to-wheel><span>看色相環</span><small>Color Wheel</small><b aria-hidden="true">→</b></button>

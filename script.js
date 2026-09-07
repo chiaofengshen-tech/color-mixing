@@ -37,7 +37,7 @@ const REVERSE_RECIPES = {
   "red-purple": { colors: ["blue", "red"], parts: [1, 2] }
 };
 
-const state = { selected: [], parts: [1, 1], result: null, wheelFilter: "all" };
+const state = { selected: [], parts: [1, 1], result: null, previousResult: null, target: null, wheelFilter: "all" };
 const screens = [...document.querySelectorAll("[data-screen]")];
 const choiceButtons = [...document.querySelectorAll("[data-color]")];
 
@@ -54,6 +54,8 @@ function resetExperiment() {
   state.selected = [];
   state.parts = [1, 1];
   state.result = null;
+  state.previousResult = null;
+  state.target = null;
   choiceButtons.forEach((button) => button.setAttribute("aria-pressed", "false"));
   updateSelection();
   showScreen("choose");
@@ -106,12 +108,33 @@ function renderMix() {
   document.querySelector("[data-result-zh]").textContent = state.result.zh;
   document.querySelector("[data-result-en]").textContent = state.result.en;
   document.querySelector("[data-ratio]").textContent = `${state.parts[0]}：${state.parts[1]}`;
+
+  const comparison = document.querySelector("[data-comparison]");
+  comparison.hidden = !state.previousResult;
+  if (state.previousResult) {
+    document.querySelector("[data-before-swatch]").style.background = state.previousResult.hex;
+    document.querySelector("[data-before-name]").textContent = state.previousResult.zh;
+    document.querySelector("[data-after-swatch]").style.background = state.result.hex;
+    document.querySelector("[data-after-name]").textContent = state.result.zh;
+  }
+
+  const targetCard = document.querySelector("[data-target-card]");
+  targetCard.hidden = !state.target;
+  if (state.target) {
+    const targetColor = WHEEL_COLORS.find((color) => color.key === state.target);
+    const complete = state.result.key === state.target;
+    document.querySelector("[data-target-swatch]").style.background = targetColor.hex;
+    document.querySelector("[data-target-name]").textContent = targetColor.zh;
+    document.querySelector("[data-target-status]").textContent = complete ? "調出來了！" : "試著調出它";
+    targetCard.classList.toggle("is-complete", complete);
+  }
 }
 
 function changeParts(index, amount) {
   if (amount > 0 && state.parts[1 - index] === 2) return;
   const next = Math.max(1, Math.min(2, state.parts[index] + amount));
   if (next === state.parts[index]) return;
+  state.previousResult = state.result;
   state.parts[index] = next;
   renderMix();
 }
@@ -137,6 +160,8 @@ function renderWheel() {
 document.querySelector("[data-start]").addEventListener("click", resetExperiment);
 document.querySelector("[data-to-mix]").addEventListener("click", () => {
   state.parts = [1, 1];
+  state.previousResult = null;
+  state.target = null;
   renderMix();
   showScreen("mix");
 });
@@ -160,7 +185,9 @@ document.querySelector("[data-color-wheel]").addEventListener("click", (event) =
   const recipe = REVERSE_RECIPES[colorButton.dataset.wheelColor];
   if (!recipe) return;
   state.selected = [...recipe.colors];
-  state.parts = [...recipe.parts];
+  state.parts = [1, 1];
+  state.previousResult = null;
+  state.target = colorButton.dataset.wheelColor;
   choiceButtons.forEach((button) => button.setAttribute("aria-pressed", state.selected.includes(button.dataset.color) ? "true" : "false"));
   updateSelection();
   renderMix();
